@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>누수탐지 현장 체크리스트</title>
+<style>
+:root {
+  --bg: #f5f5f7;
+  --white: #ffffff;
+  --border: #e0e0e5;
+  --border2: #c8c8d0;
+  --txt: #1a1a1a;
+  --txt2: #5a5a6a;
+  --txt3: #a0a0b0;
+  --blue: #1a73e8;
+  --blue-bg: #e8f0fe;
+  --blue-dark: #1557b0;
+  --green: #188038;
+  --green-bg: #e6f4ea;
+  --amber: #b45309;
+  --amber-bg: #fef3c7;
+  --red: #c0392b;
+  --red-bg: #fdecea;
+  --purple: #6d3bbd;
+  --purple-bg: #ede7f6;
+  --r: 14px;
+  --rs: 10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { background: var(--bg); color: var(--txt); font-family: -apple-system, 'SF Pro Display', sans-serif; min-height: 100vh; }
+body { padding-bottom: 60px; }
+
+/* SCREENS */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ── HOME SCREEN ── */
+.home-hdr { background: var(--white); border-bottom: 1px solid var(--border); padding: 20px 18px 16px; position: sticky; top: 0; z-index: 100; }
+.home-title { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
+.home-sub { font-size: 13px; color: var(--txt2); margin-top: 3px; }
+.home-content { padding: 16px; }
+.new-job-btn { width: 100%; padding: 16px; background: var(--blue); color: #fff; font-size: 16px; font-weight: 700; border: none; border-radius: var(--r); cursor: pointer; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.new-job-btn:active { background: var(--blue-dark); }
+.section-label { font-size: 12px; font-weight: 700; color: var(--txt3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+.job-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 10px; overflow: hidden; }
+.job-card-body { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; }
+.job-card-body:active { background: var(--bg); }
+.job-dot { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; background: var(--blue-bg); }
+.job-info { flex: 1; min-width: 0; }
+.job-name { font-size: 15px; font-weight: 600; color: var(--txt); }
+.job-meta { font-size: 12px; color: var(--txt2); margin-top: 3px; }
+.job-progress { font-size: 12px; color: var(--blue); font-weight: 600; }
+.job-prog-bar { height: 3px; background: var(--border); }
+.job-prog-fill { height: 100%; background: var(--blue); transition: width 0.3s; }
+.job-actions { display: flex; border-top: 1px solid var(--border); }
+.job-action-btn { flex: 1; padding: 10px; font-size: 13px; font-weight: 600; border: none; background: transparent; cursor: pointer; }
+.job-action-btn:active { background: var(--bg); }
+.job-action-btn.del { color: var(--red); }
+.job-action-btn.open { color: var(--blue); border-left: 1px solid var(--border); }
+.empty-state { text-align: center; padding: 50px 20px; color: var(--txt3); font-size: 14px; line-height: 1.7; }
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+/* NEW JOB MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 300; display: none; align-items: flex-end; }
+.modal-overlay.show { display: flex; }
+.modal-sheet { background: var(--white); border-radius: 20px 20px 0 0; padding: 20px 20px 40px; width: 100%; }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+.modal-input { width: 100%; padding: 14px; font-size: 16px; border: 1.5px solid var(--border2); border-radius: var(--rs); background: var(--bg); color: var(--txt); font-family: inherit; outline: none; }
+.modal-input:focus { border-color: var(--blue); }
+.modal-btns { display: flex; gap: 10px; margin-top: 14px; }
+.modal-btn { flex: 1; padding: 14px; border-radius: var(--rs); font-size: 15px; font-weight: 700; border: none; cursor: pointer; }
+.modal-cancel { background: var(--bg); color: var(--txt2); }
+.modal-confirm { background: var(--blue); color: #fff; }
+.modal-confirm:active { background: var(--blue-dark); }
+
+/* ── JOB SCREEN ── */
+.job-hdr { background: var(--white); border-bottom: 1px solid var(--border); padding: 14px 16px 10px; position: sticky; top: 0; z-index: 100; }
+.job-hdr-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.back-btn { font-size: 16px; color: var(--blue); cursor: pointer; padding: 4px 2px; }
+.job-hdr-name { font-size: 16px; font-weight: 700; flex: 1; }
+.prog-bar-bg { background: var(--border); border-radius: 3px; height: 3px; overflow: hidden; }
+.prog-bar-fill { height: 100%; background: var(--blue); border-radius: 3px; transition: width 0.3s; }
+.prog-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--txt3); margin-top: 5px; }
+
+/* STEP PILLS */
+.step-nav { display: flex; gap: 6px; overflow-x: auto; padding: 10px 16px 0; scrollbar-width: none; }
+.step-nav::-webkit-scrollbar { display: none; }
+.step-pill { flex-shrink: 0; font-size: 12px; font-weight: 600; padding: 6px 13px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--white); color: var(--txt2); cursor: pointer; white-space: nowrap; }
+.step-pill.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+.step-pill.done { border-color: var(--green); color: var(--green); background: var(--green-bg); }
+
+.job-content { padding: 14px 14px 0; }
+.step-pane { display: none; }
+.step-pane.active { display: block; }
+
+/* STEP HEADER */
+.step-hdr { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.step-dot { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+.step-title { font-size: 15px; font-weight: 700; }
+.step-sub { font-size: 12px; color: var(--txt2); margin-top: 2px; }
+
+/* CARDS */
+.card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 10px; overflow: hidden; }
+.card-hd { font-size: 11px; font-weight: 700; color: var(--txt3); text-transform: uppercase; letter-spacing: 0.07em; padding: 10px 14px 6px; }
+
+/* CHECK ITEMS */
+.ci { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--border); cursor: pointer; -webkit-user-select: none; }
+.ci:last-child { border-bottom: none; }
+.ci:active { background: var(--bg); }
+.ci-box { width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--border2); flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.ci-box.on { background: var(--blue); border-color: var(--blue); }
+.ci-box.on::after { content: '✓'; color: #fff; font-size: 14px; font-weight: 700; }
+.ci-box.gon { background: var(--green); border-color: var(--green); }
+.ci-box.gon::after { content: '✓'; color: #fff; font-size: 14px; font-weight: 700; }
+.ci-main { font-size: 15px; line-height: 1.45; color: var(--txt); }
+.ci-main.struck { color: var(--txt3); text-decoration: line-through; }
+.ci-hint { font-size: 12px; color: var(--txt2); margin-top: 3px; line-height: 1.5; }
+.badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 8px; margin-left: 5px; vertical-align: middle; }
+.bw { background: var(--amber-bg); color: var(--amber); }
+.bk { background: var(--blue-bg); color: var(--blue); }
+.br { background: var(--red-bg); color: var(--red); }
+
+/* VALVE GRID */
+.valve-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 12px 12px; }
+.valve-item { background: var(--bg); border: 2px solid var(--border); border-radius: var(--rs); padding: 12px 10px; display: flex; align-items: center; gap: 9px; cursor: pointer; -webkit-user-select: none; transition: all 0.15s; }
+.valve-item:active { background: var(--border); }
+.valve-item.locked { border-color: var(--amber); background: var(--amber-bg); }
+.valve-item.locked .v-label { color: var(--amber); font-weight: 700; }
+.v-icon { font-size: 20px; flex-shrink: 0; }
+.v-label { font-size: 14px; font-weight: 500; color: var(--txt); line-height: 1.3; }
+.v-label small { display: block; font-size: 11px; color: var(--txt2); font-weight: 400; }
+
+/* COUPLER GRID */
+.coupler-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 12px 12px; }
+.coupler-item { background: var(--bg); border: 2px solid var(--border); border-radius: var(--rs); padding: 12px 10px; display: flex; align-items: center; gap: 9px; cursor: pointer; -webkit-user-select: none; transition: all 0.15s; }
+.coupler-item.selected { border-color: var(--blue); background: var(--blue-bg); }
+.c-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.coupler-item.selected .c-dot { background: var(--blue); border-color: var(--blue); }
+.coupler-item.selected .c-dot::after { content: '✓'; color: #fff; font-size: 11px; font-weight: 700; }
+.c-label { font-size: 14px; font-weight: 500; color: var(--txt); }
+.coupler-item.selected .c-label { color: var(--blue); font-weight: 700; }
+
+/* RESULT BUTTONS */
+.result-row { display: flex; gap: 8px; padding: 10px 12px 12px; }
+.result-btn { flex: 1; padding: 13px 8px; border-radius: var(--rs); border: 2px solid var(--border); background: var(--bg); color: var(--txt2); font-size: 14px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.15s; line-height: 1.4; }
+.result-btn:active { background: var(--border); }
+.result-btn.sg { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+.result-btn.sa { border-color: var(--amber); background: var(--amber-bg); color: var(--amber); }
+.result-btn.sr { border-color: var(--red); background: var(--red-bg); color: var(--red); }
+.result-btn.sb { border-color: var(--blue); background: var(--blue-bg); color: var(--blue); }
+
+/* MEMO */
+.memo-wrap { padding: 10px 12px 12px; }
+.memo-box { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--rs); padding: 10px 12px; color: var(--txt); font-size: 15px; font-family: inherit; resize: none; min-height: 80px; outline: none; }
+.memo-box:focus { border-color: var(--blue); }
+.memo-box::placeholder { color: var(--txt3); }
+
+/* PHOTO */
+.photo-btn { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 12px; background: var(--bg); border: 1.5px dashed var(--border2); border-radius: var(--rs); cursor: pointer; font-size: 14px; color: var(--txt2); width: 100%; -webkit-user-select: none; }
+.photo-btn:active { background: var(--border); }
+.photo-count-lbl { font-size: 12px; color: var(--blue); margin-left: auto; font-weight: 600; }
+.photo-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.photo-thumb-wrap { position: relative; }
+.photo-thumb { width: 72px; height: 72px; border-radius: 10px; object-fit: cover; border: 1px solid var(--border); display: block; }
+.photo-del { position: absolute; top: -5px; right: -5px; width: 20px; height: 20px; background: var(--red); border-radius: 50%; border: 2px solid #fff; color: #fff; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+input[type=file] { display: none; }
+
+/* TIP */
+.tip { margin-bottom: 10px; padding: 11px 13px; border-radius: var(--rs); font-size: 13px; color: var(--txt2); line-height: 1.65; border-left: 3px solid; }
+.tip.blue { background: var(--blue-bg); border-color: var(--blue); color: #1a56a0; }
+.tip.amber { background: var(--amber-bg); border-color: #f59e0b; color: var(--amber); }
+.tip.green { background: var(--green-bg); border-color: var(--green); color: #0d5c2a; }
+.tip.red { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+
+/* SEQUENCE */
+.seq-step { display: flex; align-items: flex-start; gap: 12px; padding: 13px 14px; border-bottom: 1px solid var(--border); opacity: 0.3; pointer-events: none; transition: opacity 0.2s; }
+.seq-step.unlocked { opacity: 1; pointer-events: auto; cursor: pointer; }
+.seq-step.unlocked:active { background: var(--bg); }
+.seq-step:last-child { border-bottom: none; }
+.seq-step.done-seq { opacity: 1; pointer-events: none; }
+.seq-num { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--txt2); flex-shrink: 0; margin-top: 1px; transition: all 0.15s; }
+.seq-step.unlocked .seq-num { border-color: var(--blue); color: var(--blue); }
+.seq-step.done-seq .seq-num { background: var(--green); border-color: var(--green); color: #fff; font-size: 13px; }
+
+/* VALVE RETURN */
+.valve-return { background: var(--white); border: 2px solid var(--amber); border-radius: var(--r); margin-bottom: 10px; overflow: hidden; }
+.valve-return-hd { padding: 10px 14px; background: var(--amber-bg); font-size: 13px; font-weight: 700; color: var(--amber); }
+.no-valve-msg { padding: 16px 14px; font-size: 14px; color: var(--txt3); text-align: center; }
+
+/* NAV BUTTONS */
+.nav-btns { display: flex; gap: 10px; margin-top: 14px; margin-bottom: 4px; }
+.nav-btn { flex: 1; padding: 15px; border-radius: var(--rs); font-size: 15px; font-weight: 700; border: none; cursor: pointer; }
+.nav-prev { background: var(--border); color: var(--txt2); }
+.nav-next { background: var(--blue); color: #fff; }
+.nav-next:active { background: var(--blue-dark); }
+.nav-prev:active { background: var(--border2); }
+.nav-complete { background: var(--green); color: #fff; }
+.nav-complete:active { background: #0d6630; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ HOME SCREEN ══════════════ -->
+<div class="screen active" id="screen-home">
+  <div class="home-hdr">
+    <div class="home-title">누수탐지 현장</div>
+    <div class="home-sub">현장별 체크리스트 · 메모 · 사진</div>
+  </div>
+  <div class="home-content">
+    <button class="new-job-btn" onclick="openNewJobModal()">＋ 새 현장 추가</button>
+    <div class="section-label">현장 목록</div>
+    <div id="job-list"></div>
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">🔧</div>
+      아직 등록된 현장이 없습니다.<br>위 버튼으로 새 현장을 추가하세요.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ JOB SCREEN ══════════════ -->
+<div class="screen" id="screen-job">
+  <div class="job-hdr">
+    <div class="job-hdr-top">
+      <span class="back-btn" onclick="goHome()">‹ 목록</span>
+      <div class="job-hdr-name" id="job-hdr-name">현장명</div>
+    </div>
+    <div class="prog-bar-bg"><div class="prog-bar-fill" id="prog-fill"></div></div>
+    <div class="prog-row">
+      <span id="prog-label">0 / 0 완료</span>
+      <span id="prog-pct">0%</span>
+    </div>
+  </div>
+
+  <div class="step-nav" id="step-nav">
+    <div class="step-pill active" onclick="goStep(0)">현장 확인</div>
+    <div class="step-pill" onclick="goStep(1)">간이 테스트</div>
+    <div class="step-pill" onclick="goStep(2)">정밀 탐지</div>
+    <div class="step-pill" onclick="goStep(3)">굴착·수리</div>
+    <div class="step-pill" onclick="goStep(4)">2차 검증</div>
+    <div class="step-pill" onclick="goStep(5)">계량기 확인</div>
+    <div class="step-pill" onclick="goStep(6)">마무리</div>
+  </div>
+
+  <div class="job-content">
+
+    <!-- STEP 0 -->
+    <div class="step-pane active" id="pane-0">
+      <div class="step-hdr" style="margin-top:12px;">
+        <div class="step-dot" style="background:#dbeafe;color:#1a73e8;">1</div>
+        <div><div class="step-title">현장 도착 — 면담 · 관능검사</div><div class="step-sub">장비 내리기 전, 눈·귀·코로 먼저 탐지</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">고객 면담</div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">고객 상황 재청취</div><div class="ci-hint">전화 내용 재확인 + 현장 추가 파악</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">피해 세대(아래층) 먼저 방문</div><div class="ci-hint">낙수 위치·양상·속도 확인 → 탐지 범위 좁힘</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">관능검사</div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">육안 확인</div><div class="ci-hint">곰팡이·변색·물자국·벽지 들뜸</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">후각 확인</div><div class="ci-hint">하수 냄새·부패취 → 오수·하수배관 가능성</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">노출 배관·연결부 육안 점검</div><div class="ci-hint">변기 앵글밸브·세면대·싱크대·정수기·보일러 분배기</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">낙수 패턴 직접 확인</div><div class="ci-hint">지속적(수도배관) / 간헐적(하수·방수) / 낙수 속도</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">메모 · 사진</div>
+        <div class="memo-wrap">
+          <textarea class="memo-box" id="memo-0" placeholder="현장 특이사항, 고객 설명 내용..." oninput="saveMemo(0)"></textarea>
+          <label class="photo-btn" for="photo-0">
+            <span>📷</span> 사진 찍기
+            <span class="photo-count-lbl" id="pcnt-0"></span>
+          </label>
+          <input type="file" id="photo-0" accept="image/*" multiple onchange="addPhotos(this,0)">
+          <div class="photo-preview" id="pv-0"></div>
+        </div>
+      </div>
+      <div class="nav-btns"><button class="nav-btn nav-next" onclick="goStep(1)">다음 →</button></div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="step-pane" id="pane-1">
+      <div class="step-hdr" style="margin-top:12px;">
+        <div class="step-dot" style="background:#fef3c7;color:#b45309;">2</div>
+        <div><div class="step-title">간이 테스트</div><div class="step-sub">밸브 잠금 → 별침 확인 → 에어카플러 선택</div></div>
+      </div>
+      <div class="tip amber">잠근 밸브는 반드시 체크하세요. 마무리 단계에서 같은 목록이 다시 나타납니다.</div>
+      <div class="card">
+        <div class="card-hd">잠근 밸브 체크 — 해당하는 것만</div>
+        <div class="valve-grid" id="valve-grid">
+          <div class="valve-item" onclick="toggleValve(this,'변기 앵글밸브')"><div class="v-icon">🚽</div><div class="v-label">변기 앵글밸브<small>화장실</small></div></div>
+          <div class="valve-item" onclick="toggleValve(this,'정수기 밸브')"><div class="v-icon">💧</div><div class="v-label">정수기 밸브</div></div>
+          <div class="valve-item" onclick="toggleValve(this,'보일러 온수 밸브')"><div class="v-icon">🔥</div><div class="v-label">보일러 온수</div></div>
+          <div class="valve-item" onclick="toggleValve(this,'보일러 난방 밸브')"><div class="v-icon">🔥</div><div class="v-label">보일러 난방</div></div>
+          <div class="valve-item" onclick="toggleValve(this,'세면대 앵글밸브')"><div class="v-icon">🚿</div><div class="v-label">세면대 앵글밸브</div></div>
+          <div class="valve-item" onclick="toggleValve(this,'싱크대 밸브')"><div class="v-icon">🍽️</div><div class="v-label">싱크대 밸브</div></div>
+          <div class="valve-item" onclick="toggleValve(this,'세탁기 밸브')"><div class="v-icon">👕</div><div class="v-label">세탁기 밸브</div></div>
+          <div class="valve-item" onclick="toggleValve(this,'기타')"><div class="v-icon">🔧</div><div class="v-label">기타</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd">계량기 별침 확인 결과</div>
+        <div class="result-row">
+          <div class="result-btn" id="meter-yes" onclick="setR('meter-yes','meter-no','sa','')">별침 움직임<br><small style="font-size:11px;font-weight:400">배관 누수 의심</small></div>
+          <div class="result-btn" id="meter-no" onclick="setR('meter-no','meter-yes','sg','sa')">별침 정지<br><small style="font-size:11px;font-weight:400">배관 외 원인</small></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd">에어카플러 선택</div>
+        <div class="coupler-grid">
+          <div class="coupler-item" onclick="selCoupler(this,'PB관')"><div class="c-dot"></div><div class="c-label">PB관</div></div>
+          <div class="coupler-item" onclick="selCoupler(this,'엑셀관(XL)')"><div class="c-dot"></div><div class="c-label">엑셀관 (XL)</div></div>
+          <div class="coupler-item" onclick="selCoupler(this,'메타폴관')"><div class="c-dot"></div><div class="c-label">메타폴관</div></div>
+          <div class="coupler-item" onclick="selCoupler(this,'주름관')"><div class="c-dot"></div><div class="c-label">주름관</div></div>
+          <div class="coupler-item" onclick="selCoupler(this,'일반 수도꼭지')"><div class="c-dot"></div><div class="c-label">일반 수도꼭지</div></div>
+          <div class="coupler-item" onclick="selCoupler(this,'기타')"><div class="c-dot"></div><div class="c-label">기타</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd">메모</div>
+        <div class="memo-wrap">
+          <textarea class="memo-box" id="memo-1" placeholder="배관 종류, 의심 구역, 특이사항..." oninput="saveMemo(1)"></textarea>
+        </div>
+      </div>
+      <div class="nav-btns">
+        <button class="nav-btn nav-prev" onclick="goStep(0)">← 이전</button>
+        <button class="nav-btn nav-next" onclick="goStep(2)">다음 →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step-pane" id="pane-2">
+      <div class="step-hdr" style="margin-top:12px;">
+        <div class="step-dot" style="background:#ccfbf1;color:#0f766e;">3</div>
+        <div><div class="step-title">정밀 탐지 — 공압·가스·청음</div><div class="step-sub">배관 확정 → 범위 압축 → 지점 마킹</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">공압 테스트</div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">배관 내 퇴수 완료 <span class="badge bw">선행 필수</span></div><div class="ci-hint">물 잔류 시 수치 불안정</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">에어카플러 체결 → 5 kgf/cm² 주입</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">게이지 압력 저하 배관 확정</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">압력 수치 사진·영상 기록 <span class="badge bk">증빙</span></div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">가스 탐지</div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">혼합 가스(N₂+H₂) 배관 주입</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">바닥·벽면·모서리 전체 스캔 → 반응 구역 1m 이내 압축</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">청음 탐지</div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">가스 반응 지점 청음기 밀착 → Peak 지점 확인</div><div class="ci-hint">소음 차단 후 가장 크고 날카로운 소리 = 굴착 지점</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">굴착 지점 최종 마킹 (타일 1~2장 이내)</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">고객 재통보</div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">탐지 결과 수치 포함 설명</div><div class="ci-hint">예: "온수 배관 압력 저하, 거실 화장실 앞 가스 반응 확인"</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">굴착 예정 위치·범위 고객 확인</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">메모 · 사진</div>
+        <div class="memo-wrap">
+          <textarea class="memo-box" id="memo-2" placeholder="탐지 수치, 반응 위치, 특이사항..." oninput="saveMemo(2)"></textarea>
+          <label class="photo-btn" for="photo-2">
+            <span>📷</span> 사진 찍기 (압력 게이지, 가스 반응 위치)
+            <span class="photo-count-lbl" id="pcnt-2"></span>
+          </label>
+          <input type="file" id="photo-2" accept="image/*" multiple onchange="addPhotos(this,2)">
+          <div class="photo-preview" id="pv-2"></div>
+        </div>
+      </div>
+      <div class="nav-btns">
+        <button class="nav-btn nav-prev" onclick="goStep(1)">← 이전</button>
+        <button class="nav-btn nav-next" onclick="goStep(3)">다음 →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step-pane" id="pane-3">
+      <div class="step-hdr" style="margin-top:12px;">
+        <div class="step-dot" style="background:#dcfce7;color:#15803d;">4</div>
+        <div><div class="step-title">보양 → 굴착 → 수리</div><div class="step-sub">최소 굴착 · 고객 누수 직접 확인</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">보양</div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">작업 동선·바닥 보양 매트·비닐 포설</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">작업 반경 가구·집기 비닐 커버링</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">굴착</div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">타일 1~2장 이내 최소 범위 굴착</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">전기선·가스관 손상 주의</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">비눗물 → 기포 확인 영상 촬영 + 고객 동시 확인 <span class="badge bk">신뢰 핵심</span></div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">수리</div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">절단 배관 단면 이물질 제거·면취</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">주변 노후 구간까지 절단 제거</div><div class="ci-hint">임시 수리 금지 — 재발 방지</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">규격 정품 부속 압착·이중 확인</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">메모 · 사진</div>
+        <div class="memo-wrap">
+          <textarea class="memo-box" id="memo-3" placeholder="파손 원인, 사용 부속, 특이사항..." oninput="saveMemo(3)"></textarea>
+          <label class="photo-btn" for="photo-3">
+            <span>📷</span> 사진 찍기 (누수 부위, 수리 전후)
+            <span class="photo-count-lbl" id="pcnt-3"></span>
+          </label>
+          <input type="file" id="photo-3" accept="image/*" multiple onchange="addPhotos(this,3)">
+          <div class="photo-preview" id="pv-3"></div>
+        </div>
+      </div>
+      <div class="nav-btns">
+        <button class="nav-btn nav-prev" onclick="goStep(2)">← 이전</button>
+        <button class="nav-btn nav-next" onclick="goStep(4)">다음 →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step-pane" id="pane-4">
+      <div class="step-hdr" style="margin-top:12px;">
+        <div class="step-dot" style="background:#fee2e2;color:#b91c1c;">5</div>
+        <div><div class="step-title">2차 공압 검증</div><div class="step-sub">수리 후 압력 재확인 — 절대 생략 금지</div></div>
+      </div>
+      <div class="tip red">2차 공압 없이 덮으면 재누수 시 책임 분쟁 발생. 고객 눈앞에서 수치로 증명.</div>
+      <div class="card">
+        <div class="card-hd">2차 압력 테스트</div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">압력 재주입 → 게이지 변화 없음 확인 <span class="badge br">완공 기준</span></div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">결과 고객 눈앞에서 수치로 직접 확인</div><div class="ci-hint">"압력 유지 확인 — 추가 누수 없음" 고객 앞에서 증명</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">2차 공압 결과</div>
+        <div class="result-row">
+          <div class="result-btn" id="p2-ok" onclick="setR('p2-ok','p2-fail','sg','sr')">이상 없음 ✓<br><small style="font-size:11px;font-weight:400">다음 단계 진행</small></div>
+          <div class="result-btn" id="p2-fail" onclick="setR('p2-fail','p2-ok','sr','sg')">압력 저하<br><small style="font-size:11px;font-weight:400">추가 누수 확인 필요</small></div>
+        </div>
+      </div>
+      <div class="nav-btns">
+        <button class="nav-btn nav-prev" onclick="goStep(3)">← 이전</button>
+        <button class="nav-btn nav-next" onclick="goStep(5)">다음 — 계량기 확인 →</button>
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="step-pane" id="pane-5">
+      <div class="step-hdr" style="margin-top:12px;">
+        <div class="step-dot" style="background:#ede9fe;color:#6d28d9;">6</div>
+        <div><div class="step-title">계량기 별침 최종 확인</div><div class="step-sub">순서 반드시 지키기</div></div>
+      </div>
+      <div class="tip red">변기·밸브 먼저 열면 안 됩니다. 아래 순서대로만 진행하세요.</div>
+      <div class="card">
+        <div class="card-hd">순서 강제 — 위에서부터 하나씩 체크</div>
+        <div class="seq-step unlocked" id="sq0" onclick="checkSeq(0)">
+          <div class="seq-num" id="sqn0">1</div>
+          <div><div class="ci-main">에어카플러 분리 → 배관 원상복귀</div><div class="ci-hint">공압 연결했던 배관 원래 상태로 복구</div></div>
+        </div>
+        <div class="seq-step" id="sq1" onclick="checkSeq(1)">
+          <div class="seq-num" id="sqn1">2</div>
+          <div><div class="ci-main">잠근 밸브 아직 열지 않음 확인</div><div class="ci-hint">변기·정수기 등 — 그대로 잠긴 상태 유지</div></div>
+        </div>
+        <div class="seq-step" id="sq2" onclick="checkSeq(2)">
+          <div class="seq-num" id="sqn2">3</div>
+          <div><div class="ci-main">계량기 밸브만 열기</div><div class="ci-hint">다른 밸브는 여전히 잠긴 상태</div></div>
+        </div>
+        <div class="seq-step" id="sq3" onclick="checkSeq(3)">
+          <div class="seq-num" id="sqn3">4</div>
+          <div><div class="ci-main">별침 움직임 여부 확인</div><div class="ci-hint">별침 정지 = 배관 누수 없음 확정</div></div>
+        </div>
+        <div class="seq-step" id="sq4" onclick="checkSeq(4)">
+          <div class="seq-num" id="sqn4">5</div>
+          <div><div class="ci-main">고객에게 별침 정지 직접 확인시키기</div><div class="ci-hint">고객이 눈으로 확인 → 완공 신뢰 형성</div></div>
+        </div>
+      </div>
+      <div class="card" id="final-meter-card" style="display:none;">
+        <div class="card-hd">별침 최종 결과</div>
+        <div class="result-row">
+          <div class="result-btn" id="fm-ok" onclick="setR('fm-ok','fm-move','sg','sr')">별침 정지 ✓<br><small style="font-size:11px;font-weight:400">수리 완료 확인</small></div>
+          <div class="result-btn" id="fm-move" onclick="setR('fm-move','fm-ok','sr','sg')">별침 움직임<br><small style="font-size:11px;font-weight:400">추가 누수 확인 필요</small></div>
+        </div>
+      </div>
+      <div class="nav-btns">
+        <button class="nav-btn nav-prev" onclick="goStep(4)">← 이전</button>
+        <button class="nav-btn nav-next" onclick="goStep(6)">다음 — 마무리 →</button>
+      </div>
+    </div>
+
+    <!-- STEP 6 -->
+    <div class="step-pane" id="pane-6">
+      <div class="step-hdr" style="margin-top:12px;">
+        <div class="step-dot" style="background:#fce7f3;color:#be185d;">7</div>
+        <div><div class="step-title">미장 마감 · 밸브 복귀 · 정리</div><div class="step-sub">잠갔던 밸브 전부 열기 — 재방문 방지</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">시멘트 미장 마감</div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">방수액 혼합 시멘트 방수 미장</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">타일 줄눈까지 마감</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">양생 주의 안내 + 표지 부착</div><div class="ci-hint">"내일까지 밟지 마세요"</div></div></div>
+      </div>
+      <div class="valve-return" id="valve-return-wrap">
+        <div class="valve-return-hd">⚠️ 잠갔던 밸브 전부 열기 — 하나씩 확인</div>
+        <div id="valve-return-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">서류 (해당 시)</div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">수도요금 감면 서류 작성·전달 <span class="badge bw">수도요금 급증</span></div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">보험사 기술 소견서 현장 작성·전달 <span class="badge bw">보험 청구</span></div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">공사 전·중·후 사진 3단계 촬영 확인 <span class="badge bk">증빙</span></div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">현장 정리</div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">콘크리트 잔해·폐배관 마대 수거</div></div></div>
+        <div class="ci" onclick="tci(this)"><div class="ci-box"></div><div><div class="ci-main">청소기 흡입 후 젖은 걸레 마무리</div></div></div>
+      </div>
+      <div class="tip green">모든 밸브 복귀 확인 후 출발하세요.</div>
+      <div class="nav-btns">
+        <button class="nav-btn nav-prev" onclick="goStep(5)">← 이전</button>
+        <button class="nav-btn nav-complete" onclick="completeJob()">현장 완료 ✓</button>
+      </div>
+    </div>
+
+  </div><!-- job-content -->
+</div><!-- screen-job -->
+
+<!-- NEW JOB MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
+  <div class="modal-sheet">
+    <div class="modal-title">새 현장 추가</div>
+    <input class="modal-input" id="job-name-input" type="text" placeholder="현장명 입력 (예: 홍길동 고객, 마포 현장)" maxlength="30">
+    <div class="modal-btns">
+      <button class="modal-btn modal-cancel" onclick="closeModal()">취소</button>
+      <button class="modal-btn modal-confirm" onclick="createJob()">추가</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let jobs = [];
+let currentJobId = null;
+let lockedValves = new Set();
+let seqDone = 0;
+const STORAGE_KEY = 'leak_jobs_v1';
+
+// ── PERSIST ──
+function saveAll() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs)); } catch(e) {}
+}
+function loadAll() {
+  try {
+    const d = localStorage.getItem(STORAGE_KEY);
+    if (d) jobs = JSON.parse(d);
+  } catch(e) { jobs = []; }
+}
+function currentJob() { return jobs.find(j => j.id === currentJobId); }
+
+// ── HOME ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function renderHome() {
+  const list = document.getElementById('job-list');
+  const empty = document.getElementById('empty-state');
+  list.innerHTML = '';
+  if (jobs.length === 0) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  jobs.slice().reverse().forEach(job => {
+    const total = job.checkTotal || 0;
+    const done = job.checkDone || 0;
+    const pct = total ? Math.round(done/total*100) : 0;
+    const div = document.createElement('div');
+    div.className = 'job-card';
+    div.innerHTML = `
+      <div class="job-card-body" onclick="openJob('${job.id}')">
+        <div class="job-dot">🔧</div>
+        <div class="job-info">
+          <div class="job-name">${job.name}</div>
+          <div class="job-meta">${job.date} · ${pct === 100 ? '✅ 완료' : pct + '% 진행 중'}</div>
+        </div>
+        <div class="job-progress">${done}/${total}</div>
+      </div>
+      <div class="job-prog-bar"><div class="job-prog-fill" style="width:${pct}%"></div></div>
+      <div class="job-actions">
+        <button class="job-action-btn del" onclick="deleteJob('${job.id}',event)">삭제</button>
+        <button class="job-action-btn open" onclick="openJob('${job.id}')">열기 →</button>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function openNewJobModal() {
+  document.getElementById('job-name-input').value = '';
+  document.getElementById('modal').classList.add('show');
+  setTimeout(() => document.getElementById('job-name-input').focus(), 100);
+}
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+function closeModalOutside(e) { if (e.target === document.getElementById('modal')) closeModal(); }
+
+function createJob() {
+  const name = document.getElementById('job-name-input').value.trim();
+  if (!name) return;
+  const job = {
+    id: 'j' + Date.now(),
+    name,
+    date: new Date().toLocaleDateString('ko-KR', {month:'2-digit',day:'2-digit'}).replace('. ','월 ').replace('.','일'),
+    checkDone: 0,
+    checkTotal: 0,
+    memos: {},
+    photos: {},
+    valves: [],
+    completed: false
+  };
+  jobs.push(job);
+  saveAll();
+  closeModal();
+  renderHome();
+  openJob(job.id);
+}
+
+function deleteJob(id, e) {
+  e.stopPropagation();
+  if (!confirm('이 현장을 삭제할까요?')) return;
+  jobs = jobs.filter(j => j.id !== id);
+  saveAll();
+  renderHome();
+}
+
+function goHome() {
+  saveJobState();
+  showScreen('home');
+  renderHome();
+}
+
+// ── JOB ──
+function openJob(id) {
+  currentJobId = id;
+  lockedValves = new Set();
+  seqDone = 0;
+  const job = currentJob();
+  document.getElementById('job-hdr-name').textContent = job.name;
+  // reset UI
+  document.querySelectorAll('.ci-box').forEach(b => { b.className = 'ci-box'; });
+  document.querySelectorAll('.ci-main').forEach(m => m.classList.remove('struck'));
+  document.querySelectorAll('.valve-item').forEach(v => v.classList.remove('locked'));
+  document.querySelectorAll('.coupler-item').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.result-btn').forEach(b => b.className = 'result-btn');
+  document.querySelectorAll('.seq-step').forEach((s,i) => {
+    s.classList.remove('done-seq','unlocked');
+    if (i === 0) s.classList.add('unlocked');
+    document.getElementById('sqn'+i).textContent = i+1;
+  });
+  seqDone = 0;
+  document.getElementById('final-meter-card').style.display = 'none';
+  // restore memos
+  if (job.memos) {
+    [0,1,2,3].forEach(i => {
+      const el = document.getElementById('memo-' + i);
+      if (el && job.memos[i]) el.value = job.memos[i];
+    });
+  }
+  // restore photos
+  if (job.photos) {
+    [0,2,3].forEach(i => {
+      const pv = document.getElementById('pv-' + i);
+      if (pv) pv.innerHTML = '';
+      if (job.photos[i]) {
+        job.photos[i].forEach(src => appendPhotoThumb(i, src));
+        updatePhotoCount(i);
+      }
+    });
+  }
+  // restore valves
+  if (job.valves && job.valves.length) {
+    job.valves.forEach(name => {
+      document.querySelectorAll('.valve-item').forEach(el => {
+        if (el.querySelector('.v-label') && el.querySelector('.v-label').textContent.includes(name.split(' ')[0])) {
+          el.classList.add('locked');
+          lockedValves.add(name);
+        }
+      });
+    });
+  }
+  goStep(0);
+  showScreen('job');
+}
+
+function saveJobState() {
+  const job = currentJob();
+  if (!job) return;
+  // memos
+  job.memos = {};
+  [0,1,2,3].forEach(i => {
+    const el = document.getElementById('memo-' + i);
+    if (el) job.memos[i] = el.value;
+  });
+  job.valves = [...lockedValves];
+  // progress
+  const all = document.querySelectorAll('#screen-job .ci-box');
+  const done = document.querySelectorAll('#screen-job .ci-box.on, #screen-job .ci-box.gon');
+  job.checkTotal = all.length + 5;
+  job.checkDone = done.length + seqDone;
+  saveAll();
+}
+
+// ── STEPS ──
+function goStep(i) {
+  document.querySelectorAll('.step-pane').forEach((p,j) => p.classList.toggle('active', j===i));
+  document.querySelectorAll('.step-pill').forEach((p,j) => p.classList.toggle('active', j===i));
+  if (i === 6) buildValveReturn();
+  window.scrollTo(0,0);
+  saveJobState();
+  updateProgress();
+}
+
+// ── CHECK ITEMS ──
+function tci(el) {
+  const box = el.querySelector('.ci-box');
+  const main = el.querySelector('.ci-main');
+  const on = box.classList.toggle('on');
+  on ? main.classList.add('struck') : main.classList.remove('struck');
+  saveJobState();
+  updateProgress();
+}
+
+// ── VALVES ──
+function toggleValve(el, name) {
+  const locked = el.classList.toggle('locked');
+  locked ? lockedValves.add(name) : lockedValves.delete(name);
+  const job = currentJob();
+  if (job) { job.valves = [...lockedValves]; saveAll(); }
+}
+
+// ── COUPLER ──
+function selCoupler(el) {
+  document.querySelectorAll('.coupler-item').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// ── RESULT BUTTONS ──
+function setR(onId, offId, onClass, offClass) {
+  const on = document.getElementById(onId);
+  const off = document.getElementById(offId);
+  if (on) on.className = 'result-btn ' + onClass;
+  if (off && offClass) off.className = 'result-btn';
+}
+
+// ── SEQUENCE ──
+function checkSeq(i) {
+  const el = document.getElementById('sq'+i);
+  if (!el.classList.contains('unlocked')) return;
+  el.classList.remove('unlocked');
+  el.classList.add('done-seq');
+  document.getElementById('sqn'+i).textContent = '✓';
+  seqDone = i + 1;
+  const next = document.getElementById('sq'+(i+1));
+  if (next) next.classList.add('unlocked');
+  else document.getElementById('final-meter-card').style.display = 'block';
+  saveJobState();
+  updateProgress();
+}
+
+// ── VALVE RETURN ──
+function buildValveReturn() {
+  const list = document.getElementById('valve-return-list');
+  list.innerHTML = '';
+  if (lockedValves.size === 0) {
+    list.innerHTML = '<div class="no-valve-msg">간이 테스트에서 잠근 밸브 없음</div>';
+    return;
+  }
+  lockedValves.forEach(name => {
+    const row = document.createElement('div');
+    row.className = 'ci';
+    row.innerHTML = `<div class="ci-box"></div><div><div class="ci-main">${name} — 열기 완료</div></div>`;
+    row.addEventListener('click', function() {
+      const box = this.querySelector('.ci-box');
+      const main = this.querySelector('.ci-main');
+      const on = box.classList.toggle('gon');
+      on ? main.classList.add('struck') : main.classList.remove('struck');
+      saveJobState();
+      updateProgress();
+    });
+    list.appendChild(row);
+  });
+}
+
+// ── PHOTOS ──
+function addPhotos(input, stepIdx) {
+  const job = currentJob();
+  if (!job.photos) job.photos = {};
+  if (!job.photos[stepIdx]) job.photos[stepIdx] = [];
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const src = e.target.result;
+      job.photos[stepIdx].push(src);
+      appendPhotoThumb(stepIdx, src);
+      updatePhotoCount(stepIdx);
+      saveAll();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function appendPhotoThumb(stepIdx, src) {
+  const pv = document.getElementById('pv-' + stepIdx);
+  if (!pv) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'photo-thumb-wrap';
+  const img = document.createElement('img');
+  img.className = 'photo-thumb';
+  img.src = src;
+  const del = document.createElement('button');
+  del.className = 'photo-del';
+  del.textContent = '×';
+  del.onclick = () => {
+    wrap.remove();
+    const job = currentJob();
+    if (job && job.photos && job.photos[stepIdx]) {
+      job.photos[stepIdx] = job.photos[stepIdx].filter(s => s !== src);
+      saveAll();
+    }
+    updatePhotoCount(stepIdx);
+  };
+  wrap.appendChild(img);
+  wrap.appendChild(del);
+  pv.appendChild(wrap);
+}
+
+function updatePhotoCount(stepIdx) {
+  const pv = document.getElementById('pv-' + stepIdx);
+  const cnt = document.getElementById('pcnt-' + stepIdx);
+  if (pv && cnt) {
+    const n = pv.querySelectorAll('.photo-thumb-wrap').length;
+    cnt.textContent = n > 0 ? n + '장' : '';
+  }
+}
+
+// ── MEMO SAVE ──
+function saveMemo(i) {
+  const job = currentJob();
+  if (!job) return;
+  if (!job.memos) job.memos = {};
+  const el = document.getElementById('memo-' + i);
+  if (el) job.memos[i] = el.value;
+  saveAll();
+}
+
+// ── PROGRESS ──
+function updateProgress() {
+  const all = document.querySelectorAll('#screen-job .ci-box');
+  const done = document.querySelectorAll('#screen-job .ci-box.on, #screen-job .ci-box.gon');
+  const total = all.length + 5;
+  const doneCount = done.length + seqDone;
+  const pct = total ? Math.round(doneCount/total*100) : 0;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = doneCount + ' / ' + total + ' 완료';
+  document.getElementById('prog-pct').textContent = pct + '%';
+}
+
+// ── COMPLETE ──
+function completeJob() {
+  const job = currentJob();
+  if (!job) return;
+  job.completed = true;
+  saveJobState();
+  alert('현장 완료! 수고하셨습니다 👍');
+  goHome();
+}
+
+// ── INIT ──
+loadAll();
+renderHome();
+</script>
+</body>
+</html>
