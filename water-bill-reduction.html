@@ -35,21 +35,24 @@ body {
 
 .page {
   width: 210mm;
+  height: 297mm;
   padding: 14mm 20mm 12mm;
   margin: 0 auto 14px;
   background: #fff;
+  overflow: hidden;
 }
 
 .doc-title {
   font-size: 15pt; font-weight: 900;
   text-align: center; letter-spacing: 2px;
-  margin-bottom: 10px; padding-bottom: 8px;
+  margin-bottom: 18px; padding-bottom: 8px;
   border-bottom: 2.5px solid #000;
 }
 
 .form-block {
   border: 1.5px solid #000;
-  margin-bottom: 8px;
+  margin-top: 8px;
+  margin-bottom: 16px;
   display: flex;
 }
 
@@ -125,33 +128,33 @@ body {
 .recipient-line { font-size: 11pt; font-weight: 900; text-align: center; margin: 7px 0; }
 .attach-text { font-size: 9pt; line-height: 1.9; padding-left: 4px; color: #333; }
 
-.cut-wrap { margin: 14px 0 10px; display: flex; align-items: center; gap: 8px; }
+.cut-wrap { margin: 20px 0 16px; display: flex; align-items: center; gap: 8px; }
 .cut-line { flex: 1; border: none; border-top: 1.5px dashed #777; }
 .cut-label { font-size: 7.5pt; color: #888; white-space: nowrap; }
-.receipt-title { font-size: 12pt; font-weight: 900; text-align: center; margin-bottom: 10px; }
+.receipt-title { font-size: 12pt; font-weight: 900; text-align: center; margin-bottom: 16px; }
 .receipt-row { font-size: 9.5pt; line-height: 2.0; }
 .receipt-confirm { font-size: 9.5pt; margin: 8px 0 4px; }
 .receipt-sign { text-align: right; font-size: 9.5pt; line-height: 2.1; }
 .note-box {
-  margin-top: 8px; padding: 6px 10px;
+  margin-top: 16px; padding: 8px 12px;
   border: 1px solid #ccc; background: #f8f8f8;
   font-size: 8pt; line-height: 1.9; color: #444;
 }
 
 /* ── PAGE 2 ── */
 .page-title {
-  font-size: 13.5pt; font-weight: 900;
-  text-align: center; margin-bottom: 12px;
-  padding-bottom: 8px; border-bottom: 2.5px solid #000;
+  font-size: 14pt; font-weight: 900;
+  text-align: center; margin-bottom: 20px;
+  padding-bottom: 10px; border-bottom: 2.5px solid #000;
 }
 
 .field-rows {
-  border: 1.5px solid #000; margin-bottom: 8px;
+  border: 1.5px solid #000; margin-top: 8px; margin-bottom: 20px;
   display: flex; flex-direction: column;
 }
 .fr {
   display: flex; flex: 1;
-  border-bottom: 1px solid #bbb; min-height: 32px;
+  border-bottom: 1px solid #bbb; min-height: 44px;
 }
 .fr:last-child { border-bottom: none; }
 
@@ -159,8 +162,8 @@ body {
 .fl {
   width: 120px; min-width: 120px;
   background: #f0f0f0; border-right: 1px solid #bbb;
-  padding: 5px 10px;
-  font-size: 8.5pt; font-weight: 700;
+  padding: 10px 10px;
+  font-size: 9pt; font-weight: 700;
   /* 글자 균등 배분 핵심 */
   display: flex; align-items: center;
   justify-content: space-between;
@@ -176,18 +179,18 @@ body {
 }
 
 .fv {
-  flex: 1; padding: 5px 8px; font-size: 9pt;
+  flex: 1; padding: 10px 12px; font-size: 9.5pt;
   display: flex; align-items: center;
 }
 
-.note-small { font-size: 7.5pt; color: #555; margin: 4px 0 7px 2px; line-height: 1.6; }
+.note-small { font-size: 8pt; color: #555; margin: 10px 0 12px 2px; line-height: 1.8; }
 
 /* 업체 박스 */
 .company-box {
-  border: 1.5px solid #000; margin-bottom: 10px;
+  border: 1.5px solid #000; margin-top: 4px; margin-bottom: 14px;
   display: flex; flex-direction: column;
 }
-.cr { display: flex; flex: 1; border-bottom: 1px solid #bbb; min-height: 30px; }
+.cr { display: flex; flex: 1; border-bottom: 1px solid #bbb; min-height: 42px; }
 .cr:last-child { border-bottom: none; }
 
 /* 업체 레이블: 동일하게 space-between, 가운데 정렬 */
@@ -201,7 +204,7 @@ body {
 }
 
 .cv {
-  flex: 1; padding: 5px 8px; font-size: 9pt;
+  flex: 1; padding: 10px 12px; font-size: 9.5pt;
   display: flex; align-items: center; justify-content: space-between;
 }
 
@@ -209,7 +212,7 @@ body {
   font-size: 9.5pt; font-weight: 700; padding: 6px 2px;
   border-top: 1.5px solid #000; border-bottom: 1.5px solid #000; margin: 8px 0;
 }
-.confirm-footer { text-align: center; margin-top: 16px; font-size: 10pt; line-height: 2.2; }
+.confirm-footer { text-align: center; margin-top: 28px; font-size: 10.5pt; line-height: 2.8; }
 
 /* 사진대장 */
 .photo-page-title {
@@ -256,6 +259,7 @@ body {
   .page, .photo-page-4, .photo-page-2 { margin: 0; page-break-after: always; }
   .fi-sync { color: #000; }
   @page { size: A4; margin: 0; }
+  .page { height: 297mm; overflow: hidden; }
 }
 </style>
 </head>
@@ -321,24 +325,29 @@ body {
   </div>
 
   <div class="sign-date" id="sign_date_display"></div>
+<br>
   <div class="sign-input-row">
     신청인 :&nbsp;<input class="fi-inline" id="applicant_name" oninput="syncName()" placeholder="성명">&nbsp;(인)
   </div>
   <div class="sign-input-row">
     (수용가와의 관계 :&nbsp;<input class="fi-inline" id="relation" placeholder="관계" style="width:90px;">&nbsp;)
+<br>
   </div>
+<br>
   <div class="recipient-line">제주특별자치도지사 귀하</div>
+<br>
   <div class="attach-text">
-    붙임 : 1. 누수수리확인서 또는 영수증<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. 누수수리공사 사진
+<br>
+    붙임 : 1. 누수 수리확인서 또는 영수증<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. 누수 수리공사 사진
   </div>
 
   <div class="cut-wrap"><hr class="cut-line"><span class="cut-label">접수증</span><hr class="cut-line"></div>
   <div class="receipt-title">옥내 누수사용료 적용 신청서 접수증</div>
-  <div class="receipt-row">접 수 번 호 :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;수용가번호 :</div>
-  <div class="receipt-row">소유자(관리자) :</div>
-  <p class="receipt-confirm">귀하께서 신청하신 옥내누수사용료 적용신청서가 접수되었음을 확인합니다.</p>
-  <div class="receipt-sign">년&nbsp;&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;&nbsp;일<br>접수담당자&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(인)</div>
+  <div class="receipt-row">접 수 번 호 :</div>
+  <div class="receipt-row">수용가번호 :</div>
+  <p class="receipt-confirm" style="margin-top:12px;">귀하께서 신청하신 옥내누수사용료 적용신청서가 접수되었음을 확인합니다.</p>
+  <div class="receipt-sign" style="margin-top:8px;">년&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;일<br><br>상하수도과 접수담당자&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(인)</div>
   <div class="note-box">
     ※ 1. 옥내누수 현장확인 및 누수량을 선정한 연후에 조정된 고지서를 재발급합니다.<br>
     &nbsp;&nbsp;&nbsp;2. 현장 확인하여 수용가 부주의로 인한 물탱크 및 변기 볼탑과 노출관의 누수는 감면대상에서 제외됩니다.
@@ -418,6 +427,7 @@ body {
     위와 같이 옥내 누수를 수리하였음을 확인합니다.<br>
     <span id="confirm_date_display"></span><br>
     <strong>제주특별자치도지사 귀하</strong>
+<br>
   </div>
 </div>
 
