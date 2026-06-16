@@ -632,7 +632,7 @@ table.items tfoot td.foot-num {
         <th>단위</th>
         <th>단 가</th>
         <th>공급가액</th>
-        <th>부가세(10%)</th>
+        <th>부가세</th>
         <th>비고</th>
       </tr>
     </thead>
@@ -730,7 +730,7 @@ function handleNum(el, i) {
   const num = parseInt(raw) || 0;
   const pos = el.selectionStart;
   const prevLen = el.value.length;
-  el.value = num > 0 ? fmt(num) : (raw === '' ? '' : '');
+  el.value = raw === '' ? '' : fmt(num);
   // 커서 위치 보정
   const diff = el.value.length - prevLen;
   try { el.setSelectionRange(pos + diff, pos + diff); } catch(e) {}
@@ -746,8 +746,8 @@ function calcRow(i) {
   const supply = qty * price;
   const vat    = Math.floor(supply * 0.1);
 
-  document.getElementById(`supply${i}`).value = supply > 0 ? fmt(supply) : '';
-  document.getElementById(`vat${i}`).value    = vat    > 0 ? fmt(vat)    : '';
+  document.getElementById(`supply${i}`).value = qty > 0 ? fmt(supply) : '';
+document.getElementById(`vat${i}`).value    = '';
   calcTotal();
 }
 
