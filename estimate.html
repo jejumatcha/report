@@ -421,6 +421,71 @@ table.items tbody td.td-name input { text-align: left; padding-left: 2mm; }
 .pdf-stage table.items tbody td .pdf-cell-text.align-left { justify-content: flex-start; padding-left: 2mm; }
 .pdf-stage table.items tbody td .pdf-cell-text.align-center { justify-content: center; }
 .pdf-stage table.items tbody td .pdf-cell-text.align-right { justify-content: flex-end; padding-right: 2mm; }
+/* PDF 생성 시 상단 입력칸을 일반 텍스트로 변환 */
+.pdf-stage .pdf-form-text {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  box-sizing: border-box;
+  color: var(--ink);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+.pdf-stage .doc-num .pdf-form-text {
+  width: 36mm;
+  min-height: 5mm;
+  font-size: 8pt;
+  font-weight: 700;
+  color: var(--navy);
+  padding: 0 1mm;
+}
+.pdf-stage .recipient-name-row .pdf-form-text {
+  flex: 1;
+  width: 100%;
+  min-height: 9mm;
+  justify-content: center;
+  font-size: 15pt;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--navy);
+  padding: 0 1mm;
+}
+.pdf-stage .dr-value .pdf-form-text {
+  min-height: 6mm;
+  justify-content: center;
+  font-size: 8.5pt;
+  color: #444;
+  padding: 0 .5mm;
+}
+.pdf-stage .dr-value .pdf-form-text.y-input { width: 16mm; flex: 0 0 16mm; }
+.pdf-stage .dr-value .pdf-form-text.md-input { width: 10mm; flex: 0 0 10mm; }
+.pdf-stage .sg-val .pdf-form-text {
+  flex: 1;
+  width: 100%;
+  min-height: 7mm;
+  font-size: 8pt;
+  color: #333;
+  padding: 0;
+}
+.pdf-stage .ov-v .pdf-form-text {
+  width: 100%;
+  min-height: 7mm;
+  font-size: 8.5pt;
+  color: var(--ink);
+  padding: 0;
+}
+.pdf-stage .notes-body .pdf-form-text {
+  display: block;
+  width: 100%;
+  min-height: 14mm;
+  white-space: pre-wrap;
+  overflow: hidden;
+  font-size: 8pt;
+  line-height: 1.8;
+  padding: 2mm;
+}
 table.items tbody td:last-child { border-right: none; }
 table.items tfoot td {
   background: var(--gray1);
@@ -1416,9 +1481,8 @@ function safeFileName(value) {
 }
 
 function getPdfFileName() {
-  const loc = safeFileName(document.getElementById('workLocation').value);
-  const num = safeFileName(document.getElementById('docNum').value);
-  return (loc ? `견적서_${loc}` : `찰떡누수_견적서_${num || '작성본'}`) + '.pdf';
+  const recipient = safeFileName(document.getElementById('recipientName').value.trim());
+  return (recipient || '찰떡누수_견적서') + '.pdf';
 }
 
 function cloneDocumentForPdf() {
@@ -1428,31 +1492,48 @@ function cloneDocumentForPdf() {
   const clone = original.cloneNode(true);
   clone.classList.add('pdf-clone');
 
-  const originalFields = original.querySelectorAll('input, textarea');
-  const cloneFields = clone.querySelectorAll('input, textarea');
+  const originalFields = Array.from(original.querySelectorAll('input, textarea'));
+  const cloneFields = Array.from(clone.querySelectorAll('input, textarea'));
+
   originalFields.forEach((field, index) => {
     const copied = cloneFields[index];
     if (!copied) return;
-    copied.value = field.value;
-    copied.setAttribute('value', field.value);
-    if (copied.tagName === 'TEXTAREA') copied.textContent = field.value;
-    copied.setAttribute('readonly', 'readonly');
-  });
 
-  /* html2canvas에서 input 한글이 아래로 밀리거나 잘리는 현상을 방지 */
-  clone.querySelectorAll('table.items tbody input').forEach(input => {
-    const text = document.createElement('div');
-    text.className = 'pdf-cell-text';
-    const col = input.dataset.col || '';
-    if (input.closest('.td-name') || col === 'note') {
-      text.classList.add('align-left');
-    } else if (col === 'qty' || col === 'unit') {
-      text.classList.add('align-center');
+    const value = field.value || '';
+    const text = document.createElement(field.tagName === 'TEXTAREA' ? 'div' : 'span');
+
+    /* 명세표 본문은 기존 셀 정렬 규칙 사용 */
+    if (copied.closest('table.items tbody')) {
+      text.className = 'pdf-cell-text';
+      const col = copied.dataset.col || '';
+      if (copied.closest('.td-name') || col === 'note') {
+        text.classList.add('align-left');
+      } else if (col === 'qty' || col === 'unit') {
+        text.classList.add('align-center');
+      } else {
+        text.classList.add('align-right');
+      }
     } else {
-      text.classList.add('align-right');
+      /* 상단 정보·공사내역·현장주소·특이사항도 input 대신 텍스트로 캡처 */
+      text.className = 'pdf-form-text';
+      copied.classList.forEach(cls => text.classList.add(cls));
+
+      if (field.tagName === 'TEXTAREA') {
+        text.style.whiteSpace = 'pre-wrap';
+      }
+
+      const computed = window.getComputedStyle(field);
+      text.style.textAlign = computed.textAlign;
+      text.style.fontWeight = computed.fontWeight;
+      text.style.letterSpacing = computed.letterSpacing;
+
+      if (computed.textAlign === 'center') text.style.justifyContent = 'center';
+      else if (computed.textAlign === 'right') text.style.justifyContent = 'flex-end';
+      else text.style.justifyContent = 'flex-start';
     }
-    text.textContent = input.value || '';
-    input.replaceWith(text);
+
+    text.textContent = value;
+    copied.replaceWith(text);
   });
 
   stage.appendChild(clone);
@@ -1472,6 +1553,7 @@ async function generatePdf() {
 
   try {
     syncDesktopBasicsToMobile();
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
     const prepared = cloneDocumentForPdf();
     stage = prepared.stage;
     const clone = prepared.clone;
