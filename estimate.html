@@ -378,7 +378,8 @@ table.items tbody td {
   border-right: 1px solid var(--gray2);
   height: 9mm;
   vertical-align: middle;
-  padding: 0 1mm;
+  padding: 0;
+  position: relative;
 }
 table.items tbody td.no {
   background: var(--gray1);
@@ -386,8 +387,40 @@ table.items tbody td.no {
   font-size: 7.5pt;
   border-right: 1px solid var(--line);
 }
-table.items tbody td input { font-size: 8pt; }
-table.items tbody td.td-name input { text-align: left; }
+table.items tbody td input {
+  display: block;
+  width: 100%;
+  height: 9mm;
+  min-height: 9mm;
+  margin: 0;
+  padding: 0 1mm;
+  border: none;
+  border-radius: 0;
+  line-height: normal;
+  font-size: 8pt;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+}
+table.items tbody td.td-name input { text-align: left; padding-left: 2mm; }
+
+/* PDF 생성 시 input 대신 사용하는 안정적인 텍스트 셀 */
+.pdf-stage table.items tbody td .pdf-cell-text {
+  width: 100%;
+  height: 8mm;
+  min-height: 8mm;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 1mm;
+  font-size: 8pt;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.pdf-stage table.items tbody td .pdf-cell-text.align-left { justify-content: flex-start; padding-left: 2mm; }
+.pdf-stage table.items tbody td .pdf-cell-text.align-center { justify-content: center; }
+.pdf-stage table.items tbody td .pdf-cell-text.align-right { justify-content: flex-end; padding-right: 2mm; }
 table.items tbody td:last-child { border-right: none; }
 table.items tfoot td {
   background: var(--gray1);
@@ -704,6 +737,7 @@ table.items tfoot td.foot-num {
   background:#fff !important;
 }
 .pdf-stage table.items tbody td { height:8mm; }
+.pdf-stage table.items tbody td input { height:8mm !important; min-height:8mm !important; }
 .pdf-stage .title-wrap { margin-bottom:4mm; }
 .pdf-stage .info-row { margin-bottom:3mm; }
 .pdf-stage .overview,
@@ -770,6 +804,7 @@ table.items tfoot td.foot-num {
     overflow:hidden !important;
   }
   table.items tbody td { height:8mm; }
+  table.items tbody td input { height:8mm !important; min-height:8mm !important; }
   .title-wrap { margin-bottom:4mm; }
   .info-row { margin-bottom:3mm; }
   .overview,
@@ -852,7 +887,7 @@ table.items tfoot td.foot-num {
     <section class="mobile-section">
       <div class="mobile-section-title">견적 품목</div>
       <div id="mobileItems"></div>
-      <div class="mobile-help">수량과 단가를 입력하면 공급가액·부가세·합계가 자동 계산됩니다.</div>
+      <div class="mobile-help">수량과 단가를 입력하면 공급가액이 계산되며, 부가세는 전체 공급가액 합계에서 한 번만 계산됩니다.</div>
     </section>
 
     <section class="mobile-section">
@@ -1105,6 +1140,12 @@ table.items tfoot td.foot-num {
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script>
 const ROWS = 8;
+const DEFAULT_ITEMS = [
+  { name: '청음식 누수탐지', qty: '1', unit: '식' },
+  { name: '가스식 누수탐지', qty: '1', unit: '식' },
+  { name: '굴착작업', qty: '1', unit: '식' },
+  { name: '배관수리', qty: '1', unit: '식' }
+];
 
 /* ══ 오늘 날짜 + 견적번호 자동 입력 ══ */
 (function() {
@@ -1133,13 +1174,14 @@ const mobileItems = document.getElementById('mobileItems');
 /* ══ 명세 행 + 모바일 품목 카드 생성 ══ */
 for (let i = 1; i <= ROWS; i++) {
   const tr = document.createElement('tr');
+  const defaultItem = DEFAULT_ITEMS[i - 1] || { name: '', qty: '', unit: '' };
   const tdNo     = `<td class="no">${i}</td>`;
-  const tdName   = `<td class="td-name"><input type="text" data-row="${i}" data-col="name" style="text-align:left;"></td>`;
-  const tdQty    = `<td><input type="text" inputmode="numeric" data-row="${i}" data-col="qty" oninput="handleNum(this,${i})" style="text-align:center;width:100%;"></td>`;
-  const tdUnit   = `<td><input type="text" data-row="${i}" data-col="unit" style="text-align:center;width:100%;"></td>`;
+  const tdName   = `<td class="td-name"><input type="text" data-row="${i}" data-col="name" value="${defaultItem.name}" style="text-align:left;"></td>`;
+  const tdQty    = `<td><input type="text" inputmode="numeric" data-row="${i}" data-col="qty" value="${defaultItem.qty}" oninput="handleNum(this,${i})" style="text-align:center;width:100%;"></td>`;
+  const tdUnit   = `<td><input type="text" data-row="${i}" data-col="unit" value="${defaultItem.unit}" style="text-align:center;width:100%;"></td>`;
   const tdPrice  = `<td><input type="text" inputmode="numeric" data-row="${i}" data-col="price" oninput="handleNum(this,${i})" style="text-align:right;width:100%;"></td>`;
-  const tdSupply = `<td><input type="text" class="auto" readonly id="supply${i}" style="width:100%;text-align:right;padding-right:3mm;"></td>`;
-  const tdVat    = `<td><input type="text" class="auto" readonly id="vat${i}" style="width:100%;text-align:right;padding-right:3mm;"></td>`;
+  const tdSupply = `<td><input type="text" class="auto" readonly id="supply${i}" style="width:100%;text-align:right;padding-right:2mm;"></td>`;
+  const tdVat    = `<td><input type="text" class="auto" readonly id="vat${i}" value="" aria-label="부가세는 합계에서 계산" style="width:100%;text-align:right;padding-right:2mm;"></td>`;
   const tdNote   = `<td><input type="text" data-row="${i}" data-col="note" style="width:100%;"></td>`;
   tr.innerHTML = tdNo + tdName + tdQty + tdUnit + tdPrice + tdSupply + tdVat + tdNote;
   tbody.appendChild(tr);
@@ -1149,20 +1191,20 @@ for (let i = 1; i <= ROWS; i++) {
   card.innerHTML = `
     <div class="mobile-item-head">
       <div class="mobile-item-no">${i}</div>
-      <div class="mobile-item-calc" id="mCalc${i}">공급가액 <strong>0원</strong><br>부가세 0원</div>
+      <div class="mobile-item-calc" id="mCalc${i}">공급가액 <strong>0원</strong></div>
     </div>
     <div class="mobile-field">
       <label>품명</label>
-      <input type="text" data-mrow="${i}" data-mcol="name" oninput="syncMobileItemText(this,${i},'name')" placeholder="예) 누수탐지 및 배관 부분 수리">
+      <input type="text" data-mrow="${i}" data-mcol="name" value="${defaultItem.name}" oninput="syncMobileItemText(this,${i},'name')" placeholder="품명을 입력하세요">
     </div>
     <div class="mobile-grid-2">
       <div class="mobile-field">
         <label>수량</label>
-        <input type="text" inputmode="numeric" data-mrow="${i}" data-mcol="qty" oninput="handleMobileNum(this,${i},'qty')" placeholder="1">
+        <input type="text" inputmode="numeric" data-mrow="${i}" data-mcol="qty" value="${defaultItem.qty}" oninput="handleMobileNum(this,${i},'qty')" placeholder="수량">
       </div>
       <div class="mobile-field">
         <label>단위</label>
-        <input type="text" data-mrow="${i}" data-mcol="unit" oninput="syncMobileItemText(this,${i},'unit')" placeholder="식">
+        <input type="text" data-mrow="${i}" data-mcol="unit" value="${defaultItem.unit}" oninput="syncMobileItemText(this,${i},'unit')" placeholder="단위">
       </div>
     </div>
     <div class="mobile-field">
@@ -1207,27 +1249,26 @@ function calcRow(i) {
   const qty   = parseNum(qtyEl);
   const price = parseNum(priceEl);
   const supply = qty * price;
-  const vat    = Math.floor(supply * 0.1);
-
   document.getElementById(`supply${i}`).value = qty > 0 && price > 0 ? fmt(supply) : '';
-  document.getElementById(`vat${i}`).value    = qty > 0 && price > 0 ? fmt(vat) : '';
+  /* 부가세는 각 품목별로 표시하지 않고 전체 공급가액 합계에서 계산 */
+  document.getElementById(`vat${i}`).value = '';
   const mobileCalc = document.getElementById(`mCalc${i}`);
   if (mobileCalc) {
-    mobileCalc.innerHTML = `공급가액 <strong>${fmt(supply)}원</strong><br>부가세 ${fmt(vat)}원`;
+    mobileCalc.innerHTML = `공급가액 <strong>${fmt(supply)}원</strong>`;
   }
   calcTotal();
 }
 
 /* ══ 합계 ══ */
 function calcTotal() {
-  let sumSupply = 0, sumVat = 0;
+  let sumSupply = 0;
   for (let i = 1; i <= ROWS; i++) {
     const qty   = parseNum(document.querySelector(`input[data-row="${i}"][data-col="qty"]`));
     const price = parseNum(document.querySelector(`input[data-row="${i}"][data-col="price"]`));
-    const supply = qty * price;
-    sumSupply += supply;
-    sumVat    += Math.floor(supply * 0.1);
+    sumSupply += qty * price;
   }
+  /* 부가세는 품목별 합산이 아니라 전체 공급가액 합계의 10%로 한 번만 계산 */
+  const sumVat = Math.floor(sumSupply * 0.1);
   const grand = sumSupply + sumVat;
   document.getElementById('footSupply').textContent = fmt(sumSupply);
   document.getElementById('footVat').textContent    = fmt(sumVat);
@@ -1287,16 +1328,24 @@ function resetForm() {
   document.getElementById('workLocation').value = '';
   document.getElementById('notes').value = '';
   for (let i = 1; i <= ROWS; i++) {
+    const defaultItem = DEFAULT_ITEMS[i - 1] || { name: '', qty: '', unit: '' };
+    const defaultValues = {
+      name: defaultItem.name,
+      qty: defaultItem.qty,
+      unit: defaultItem.unit,
+      price: '',
+      note: ''
+    };
     ['name','qty','unit','price','note'].forEach(col => {
       const el = document.querySelector(`input[data-row="${i}"][data-col="${col}"]`);
-      if (el) el.value = '';
+      if (el) el.value = defaultValues[col];
       const mobile = document.querySelector(`input[data-mrow="${i}"][data-mcol="${col}"]`);
-      if (mobile) mobile.value = '';
+      if (mobile) mobile.value = defaultValues[col];
     });
     document.getElementById(`supply${i}`).value = '';
     document.getElementById(`vat${i}`).value = '';
     const mCalc = document.getElementById(`mCalc${i}`);
-    if (mCalc) mCalc.innerHTML = '공급가액 <strong>0원</strong><br>부가세 0원';
+    if (mCalc) mCalc.innerHTML = '공급가액 <strong>0원</strong>';
   }
   syncDesktopBasicsToMobile();
   calcTotal();
@@ -1388,6 +1437,22 @@ function cloneDocumentForPdf() {
     copied.setAttribute('value', field.value);
     if (copied.tagName === 'TEXTAREA') copied.textContent = field.value;
     copied.setAttribute('readonly', 'readonly');
+  });
+
+  /* html2canvas에서 input 한글이 아래로 밀리거나 잘리는 현상을 방지 */
+  clone.querySelectorAll('table.items tbody input').forEach(input => {
+    const text = document.createElement('div');
+    text.className = 'pdf-cell-text';
+    const col = input.dataset.col || '';
+    if (input.closest('.td-name') || col === 'note') {
+      text.classList.add('align-left');
+    } else if (col === 'qty' || col === 'unit') {
+      text.classList.add('align-center');
+    } else {
+      text.classList.add('align-right');
+    }
+    text.textContent = input.value || '';
+    input.replaceWith(text);
   });
 
   stage.appendChild(clone);
