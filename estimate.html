@@ -445,63 +445,18 @@ table.items tfoot td.foot-num { text-align: right; padding-right: 2mm; }
   .toolbar-tip { display: none; }
 }
 
-/* ══ 인쇄 ══ */
-@media print {
-  /* Safari/iOS GitHub 링크 제거 */
-  @page {
-    margin: 8mm 10mm;
-    /* Safari에서 헤더/푸터 숨김 */
-    size: A4;
-  }
 
-  html, body {
-    height: auto !important;
-    background: #fff !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  .toolbar { display: none !important; }
-
-  .doc {
-    box-shadow: none !important;
-    padding: 0 !important;
-    max-width: 100% !important;
-    /* 1페이지 강제 */
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-
-  /* 요소별 페이지 분리 방지 */
-  .info-row, .overview, .total, table.items, .notes-box, .conditions, .doc-footer {
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-
-  /* 인쇄 시 2단 유지 */
-  .info-row { grid-template-columns: 1fr 1fr !important; }
-
-  /* 입력 필드 텍스트처럼 */
-  input[type="text"], textarea {
-    background: transparent !important;
-    border: none !important;
-    -webkit-appearance: none;
-  }
-  input.auto { background: transparent !important; border: none !important; }
-  .notes-body textarea { border: none !important; background: transparent !important; resize: none; }
-
-  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-}
 </style>
+<!-- PDF 생성 라이브러리 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
 <div class="toolbar">
-  <button class="btn-print" onclick="printWithTitle()">🖨 인쇄 / PDF 저장</button>
+  <button class="btn-print" onclick="generatePDF()" id="btnPdf">📄 PDF 생성</button>
   <button class="btn-reset" onclick="resetForm()">초기화</button>
-  <span class="toolbar-tip">Chrome → 인쇄 → 여백: 없음 권장</span>
+  <span class="toolbar-tip" id="pdfStatus">버튼을 누르면 PDF 파일로 저장됩니다</span>
 </div>
 
 <div class="doc">
@@ -783,10 +738,79 @@ function resetForm() {
   document.getElementById('footSupply').textContent='0';
   document.getElementById('footVat').textContent='0';
 }
-function printWithTitle() {
-  const loc = document.getElementById('workLocation').value.trim();
-  document.title = loc ? '견적서_'+loc : '찰떡누수_견적서';
-  window.print();
+async function generatePDF() {
+  const btn = document.getElementById('btnPdf');
+  const status = document.getElementById('pdfStatus');
+  btn.disabled = true;
+  btn.textContent = '⏳ 생성 중...';
+  status.textContent = '잠시만 기다려주세요...';
+
+  // 입력 필드 테두리 임시 제거 (캡처용)
+  const inputs = document.querySelectorAll('input[type="text"], textarea');
+  inputs.forEach(el => {
+    el.dataset.origBorder = el.style.border || '';
+    el.dataset.origBg = el.style.background || '';
+    el.style.border = 'none';
+    el.style.background = 'transparent';
+  });
+  // 툴바 숨김
+  document.querySelector('.toolbar').style.display = 'none';
+  // doc 배경 임시 흰색
+  const docEl = document.querySelector('.doc');
+  const origShadow = docEl.style.boxShadow;
+  docEl.style.boxShadow = 'none';
+
+  try {
+    const canvas = await html2canvas(docEl, {
+      scale: 2.5,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      windowWidth: docEl.scrollWidth,
+      windowHeight: docEl.scrollHeight,
+    });
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    const pageW = 210;
+    const pageH = 297;
+    const imgW = pageW;
+    const imgH = (canvas.height * pageW) / canvas.width;
+
+    // 1장에 맞게 스케일 조정
+    if (imgH <= pageH) {
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, imgW, imgH);
+    } else {
+      // 비율 조정해서 1장에 강제 맞춤
+      const scale = pageH / imgH;
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, imgW * scale, pageH);
+    }
+
+    const loc = document.getElementById('workLocation').value.trim();
+    const filename = loc ? '견적서_' + loc + '.pdf' : '찰떡누수_견적서.pdf';
+    pdf.save(filename);
+
+    status.textContent = '✅ PDF 저장 완료!';
+    setTimeout(() => { status.textContent = '버튼을 누르면 PDF 파일로 저장됩니다'; }, 3000);
+
+  } catch(e) {
+    status.textContent = '❌ 오류 발생: ' + e.message;
+  } finally {
+    // 원상복구
+    inputs.forEach(el => {
+      el.style.border = el.dataset.origBorder || '';
+      el.style.background = el.dataset.origBg || '';
+    });
+    document.querySelector('.toolbar').style.display = '';
+    docEl.style.boxShadow = origShadow;
+    btn.disabled = false;
+    btn.textContent = '📄 PDF 생성';
+  }
 }
 function restoreDefault(el, val) {
   if (el.value.trim()==='') el.value=val;
