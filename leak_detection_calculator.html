@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>누수탐지 & 배관공사 스마트 견적 산출기</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Inter & Noto Sans KR Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc;
+        }
+        /* Custom styling for sleek UI */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid #e2e8f0;
+        }
+        .btn-preset:active {
+            transform: scale(0.97);
+        }
+        /* Toast notification animation */
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(20px); }
+            15% { opacity: 1; transform: translateY(0); }
+            85% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+        .animate-toast {
+            animation: fadeInOut 2.5s forwards;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen pb-12">
+
+    <!-- Top Header -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-500/30">
+                    <i class="fa-solid fa-wrench"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">누수탐지 전문 견적 산출기</h1>
+                    <p class="text-xs text-slate-400">보험 분쟁 방지 & 자동 비율 정산 솔루션</p>
+                </div>
+            </div>
+            <div class="hidden sm:block text-right">
+                <span class="inline-block px-2.5 py-1 bg-slate-800 text-blue-400 text-xs font-semibold rounded-full border border-slate-700">
+                    VAT 10% 자동 연동
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 pt-6 space-y-6">
+
+        <!-- Special Mode Alert Switcher -->
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 shadow-sm">
+            <div class="flex items-start justify-between">
+                <div class="flex items-start space-x-3">
+                    <div class="p-2 bg-amber-500 text-white rounded-lg mt-0.5">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-amber-900 text-sm sm:text-base">제3자 자가 굴착 / 압력 유도 특수 상황 전환</h2>
+                        <p class="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                            압력검사 도중 소리를 듣고 집주인/타인이 땅을 파버린 경우, 정직하게 0원 처리하고 <strong>압력유도(20만) + 배관수리/재검증(20만)</strong>으로 자동 조정합니다.
+                        </p>
+                    </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer ml-3 flex-shrink-0 mt-1">
+                    <input type="checkbox" id="specialScenarioToggle" class="sr-only peer" onchange="toggleSpecialScenario()">
+                    <div class="w-12 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Section 1: Main Calculator Inputs & Presets -->
+        <section class="glass-card rounded-2xl p-5 shadow-sm space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <label for="totalAmountInput" class="font-bold text-slate-900 flex items-center text-base">
+                    <i class="fa-solid fa-calculator text-blue-600 mr-2"></i> 총 견적 금액 (VAT 포함)
+                </label>
+                <span id="koreanTextDisplay" class="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
+                    일금 팔십팔만 원정
+                </span>
+            </div>
+
+            <!-- Input & Action -->
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                <div class="sm:col-span-8 relative">
+                    <input type="number" id="totalAmountInput" value="880000" step="10000" 
+                        class="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-300 rounded-xl font-bold text-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                        placeholder="예: 880000" oninput="calculateEstimate()">
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm">원</span>
+                </div>
+                <button onclick="calculateEstimate()" class="sm:col-span-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>견적 산출하기</span>
+                </button>
+            </div>
+
+            <!-- Quick Presets -->
+            <div>
+                <span class="text-xs font-semibold text-slate-500 block mb-2">⚡ 자주 쓰는 정찰제 패키지 프리셋 (VAT 포함)</span>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <button onclick="setPreset(660000)" class="btn-preset bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 border border-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs text-center transition-all">
+                        66만 원 <span class="text-[10px] text-slate-400 font-normal block">(공급 60만)</span>
+                    </button>
+                    <button onclick="setPreset(880000)" class="btn-preset bg-blue-50 border-blue-300 text-blue-700 font-bold py-2 px-3 rounded-xl text-xs text-center transition-all shadow-sm">
+                        88만 원 <span class="text-[10px] text-blue-500 font-normal block">(공급 80만)</span>
+                    </button>
+                    <button onclick="setPreset(1100000)" class="btn-preset bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 border border-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs text-center transition-all">
+                        110만 원 <span class="text-[10px] text-slate-400 font-normal block">(공급 100만)</span>
+                    </button>
+                    <button onclick="setPreset(1320000)" class="btn-preset bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 border border-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs text-center transition-all">
+                        132만 원 <span class="text-[10px] text-slate-400 font-normal block">(공급 120만)</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Summary Badges & Totals -->
+        <div class="grid grid-cols-3 gap-3">
+            <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-sm text-center">
+                <span class="text-xs text-slate-500 block font-medium">공급가액</span>
+                <span id="summarySupplyPrice" class="text-sm sm:text-lg font-bold text-slate-900 mt-0.5 block">800,000원</span>
+            </div>
+            <div class="bg-white border border-slate-200 p-3.5 rounded-2xl shadow-sm text-center">
+                <span class="text-xs text-slate-500 block font-medium">부가가치세 (10%)</span>
+                <span id="summaryVat" class="text-sm sm:text-lg font-bold text-blue-600 mt-0.5 block">80,000원</span>
+            </div>
+            <div class="bg-slate-900 p-3.5 rounded-2xl shadow-sm text-center text-white">
+                <span class="text-xs text-slate-400 block font-medium">총 견적합계</span>
+                <span id="summaryTotal" class="text-sm sm:text-lg font-extrabold text-amber-400 mt-0.5 block">880,000원</span>
+            </div>
+        </div>
+
+        <!-- Section 3: Itemized Breakdown Table -->
+        <section class="glass-card rounded-2xl p-5 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 flex items-center">
+                    <i class="fa-solid fa-list-check text-blue-600 mr-2"></i> 세부 기술 공정별 산출 내역
+                </h3>
+                <span class="text-xs text-slate-500">배분 비율: <span id="ratioBadge" class="font-bold text-slate-700">40 : 30 : 15 : 15</span></span>
+            </div>
+
+            <!-- Detailed Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-600 text-xs font-semibold rounded-lg">
+                            <th class="p-3 rounded-l-lg">품명 및 공정 범위 (보험 특화)</th>
+                            <th class="p-3 text-right">공급가액</th>
+                            <th class="p-3 text-right">VAT (10%)</th>
+                            <th class="p-3 text-right rounded-r-lg">합계금액</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-slate-800">
+                        <!-- Row 1: 청음식 -->
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="p-3 font-medium">
+                                <div class="font-bold text-slate-900">청음식 누수탐지</div>
+                                <div class="text-[11px] text-slate-400">정밀 청음 탐지기 이용 지점 특정</div>
+                            </td>
+                            <td id="row1Supply" class="p-3 text-right font-semibold">350,000원</td>
+                            <td id="row1Vat" class="p-3 text-right text-xs text-slate-500">35,000원</td>
+                            <td id="row1Total" class="p-3 text-right font-bold text-slate-900">385,000원</td>
+                        </tr>
+                        <!-- Row 2: 가스식 -->
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="p-3 font-medium">
+                                <div class="font-bold text-slate-900">가스식 누수탐지 <span class="text-xs text-blue-600 font-normal">(기초압력점검 포함)</span></div>
+                                <div class="text-[11px] text-slate-400">배관 가압 테스트 및 소리/가스 유도</div>
+                            </td>
+                            <td id="row2Supply" class="p-3 text-right font-semibold">250,000원</td>
+                            <td id="row2Vat" class="p-3 text-right text-xs text-slate-500">25,000원</td>
+                            <td id="row2Total" class="p-3 text-right font-bold text-slate-900">275,000원</td>
+                        </tr>
+                        <!-- Row 3: 굴착작업 -->
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="p-3 font-medium">
+                                <div class="font-bold text-slate-900">굴착작업 <span class="text-xs text-blue-600 font-normal">(파쇄 및 토사정리)</span></div>
+                                <div class="text-[11px] text-slate-400">바닥 파쇄, 매립물 굴착 및 토사 정리</div>
+                            </td>
+                            <td id="row3Supply" class="p-3 text-right font-semibold">100,000원</td>
+                            <td id="row3Vat" class="p-3 text-right text-xs text-slate-500">10,000원</td>
+                            <td id="row3Total" class="p-3 text-right font-bold text-slate-900">110,000원</td>
+                        </tr>
+                        <!-- Row 4: 배관수리 -->
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="p-3 font-medium">
+                                <div class="font-bold text-slate-900">배관수리 <span class="text-xs text-blue-600 font-normal">(재압력검사 및 미장 포함)</span></div>
+                                <div class="text-[11px] text-slate-400">배관 절단/연결, 2차 검증, 미장 마감</div>
+                            </td>
+                            <td id="row4Supply" class="p-3 text-right font-semibold">100,000원</td>
+                            <td id="row4Vat" class="p-3 text-right text-xs text-slate-500">10,000원</td>
+                            <td id="row4Total" class="p-3 text-right font-bold text-slate-900">110,000원</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-slate-900 text-white font-bold">
+                            <td class="p-3 rounded-l-lg">합계</td>
+                            <td id="tableTotalSupply" class="p-3 text-right">800,000원</td>
+                            <td id="tableTotalVat" class="p-3 text-right text-xs text-blue-300">80,000원</td>
+                            <td id="tableTotalFinal" class="p-3 text-right text-amber-400 text-base rounded-r-lg">880,000원</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Copy Button for SMS/KakaoTalk -->
+            <div class="pt-2">
+                <button onclick="copyToClipboard()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-copy"></i>
+                    <span>고객 문안용 견적 내역 복사하기 (카톡/문자 전송용)</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Section 4: Interactive Discount Calculator Widget -->
+        <section class="glass-card rounded-2xl p-5 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 flex items-center">
+                    <i class="fa-solid fa-scissors text-amber-500 mr-2"></i> 현장 네고 & 할인 계산기 (단산기)
+                </h3>
+                <span class="text-xs text-slate-400">소비자 요청 시 실시간 할인율 계산</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Discount Input Type 1: KRW -->
+                <div>
+                    <label for="discountAmountInput" class="text-xs font-semibold text-slate-600 block mb-1">
+                        깎아줄 금액 입력 (원)
+                    </label>
+                    <div class="relative">
+                        <input type="number" id="discountAmountInput" value="80000" step="10000"
+                            class="w-full pl-3 pr-10 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            placeholder="예: 80000" oninput="calculateDiscount('amount')">
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">원</span>
+                    </div>
+                </div>
+
+                <!-- Discount Input Type 2: Percentage -->
+                <div>
+                    <label for="discountPercentInput" class="text-xs font-semibold text-slate-600 block mb-1">
+                        할인율 입력 (%)
+                    </label>
+                    <div class="relative">
+                        <input type="number" id="discountPercentInput" value="9.09" step="0.1"
+                            class="w-full pl-3 pr-10 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            placeholder="예: 10" oninput="calculateDiscount('percent')">
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Discount Result Box -->
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+                <div>
+                    <span id="discountResultText" class="text-xs text-slate-500 block">
+                        원래 금액 <strong id="origTotalText">880,000원</strong>에서 <strong id="dcAmountText" class="text-red-600">80,000원</strong> 깎아줌
+                    </span>
+                    <span class="text-xs font-semibold text-slate-700">
+                        실제 적용 할인율: <span id="dcPercentText" class="text-amber-600 font-bold">9.09%</span>
+                    </span>
+                </div>
+                <div class="bg-white border border-slate-300 px-4 py-2 rounded-lg shadow-sm">
+                    <span class="text-[10px] text-slate-400 block uppercase font-bold">최종 할인 적용가</span>
+                    <span id="finalDiscountedTotal" class="text-lg font-extrabold text-blue-700">800,000원</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Customer Objection Handling Guide & Disclaimer -->
+        <section class="bg-slate-800 text-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
+            <h4 class="font-bold text-white text-sm flex items-center">
+                <i class="fa-solid fa-shield-halved text-blue-400 mr-2"></i> 현장 소비법 및 분쟁 예방 가이드
+            </h4>
+            <div class="text-xs leading-relaxed space-y-2 text-slate-300">
+                <p>
+                    <strong>1. 사전 견적 유의사항:</strong> 본 견적은 표준 매립 깊이 기준 예상 견적입니다. 굴착 후 30cm 이상 깊은 매립, 암석, 이중관, 포크레인 중장비 투입 시 사전 안내 후 추가 비용이 발생할 수 있습니다.
+                </p>
+                <p>
+                    <strong>2. 제3자 자가 굴착 시 태클 대응 논리:</strong> "배관에 정밀 압력을 넣지 않았다면 소리가 나지 않았습니다. 위치 유도 기술료(20만)와 보수 후 2차 재압력 검증 및 AS 보증료(20만)가 적용된 정 정당한 기술 금액입니다."
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-5 py-3 rounded-full shadow-2xl border border-slate-700 text-sm font-semibold flex items-center space-x-2">
+        <i class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toastMsg">클립보드에 복사되었습니다!</span>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Number to Korean Text Speller function
+        function numberToKorean(number) {
+            if (isNaN(number) || number <= 0) return '일금 영 원정';
+
+            const units = ['', '만', '억', '조'];
+            const smallUnits = ['', '십', '백', '천'];
+            const digits = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'];
+
+            let numStr = Math.floor(number).toString();
+            let result = '';
+            let unitIndex = 0;
+
+            while (numStr.length > 0) {
+                let chunk = numStr.slice(-4);
+                numStr = numStr.slice(0, -4);
+                
+                let chunkText = '';
+                for (let i = 0; i < chunk.length; i++) {
+                    let digit = parseInt(chunk[chunk.length - 1 - i]);
+                    if (digit !== 0) {
+                        let digitWord = (digit === 1 && i > 0) ? '' : digits[digit];
+                        chunkText = digitWord + smallUnits[i] + chunkText;
+                    }
+                }
+
+                if (chunkText !== '') {
+                    result = chunkText + units[unitIndex] + ' ' + result;
+                }
+                unitIndex++;
+            }
+
+            return '일금 ' + result.trim() + ' 원정';
+        }
+
+        // Format number to currency format (comma separated)
+        function formatNumber(num) {
+            return new Intl.NumberFormat('ko-KR').format(Math.round(num));
+        }
+
+        // Main Calculation Engine
+        function calculateEstimate() {
+            const inputVal = parseFloat(document.getElementById('totalAmountInput').value) || 0;
+            const isSpecialScenario = document.getElementById('specialScenarioToggle').checked;
+
+            let supplyPrice = 0;
+            let vat = 0;
+            let totalVal = inputVal;
+
+            let row1Supply = 0, row2Supply = 0, row3Supply = 0, row4Supply = 0;
+
+            if (isSpecialScenario) {
+                // Special Scenario (~40만~45만 KRW adjustment)
+                row1Supply = 0;       // 청음 0원
+                row2Supply = 200000;  // 가스/압력유도 20만
+                row3Supply = 0;       // 굴착 0원
+                row4Supply = 200000;  // 배관수리/2차검증 20만
+
+                supplyPrice = row1Supply + row2Supply + row3Supply + row4Supply; // 400,000원
+                vat = Math.round(supplyPrice * 0.1); // 40,000원
+                totalVal = supplyPrice + vat; // 440,000원
+
+                document.getElementById('ratioBadge').innerText = "특수 조정 (0 : 20만 : 0 : 20만)";
+            } else {
+                // Normal Calculation
+                document.getElementById('ratioBadge').innerText = "40 : 30 : 15 : 15 (정찰제/비율)";
+                
+                // Calculate supply price & VAT
+                supplyPrice = Math.round(totalVal / 1.1);
+                vat = totalVal - supplyPrice;
+
+                // Fixed Tier Rules or Ratio Rules based on Supply Price
+                if (supplyPrice === 600000) {
+                    row1Supply = 250000;
+                    row2Supply = 200000;
+                    row3Supply = 70000;
+                    row4Supply = 600000 - (row1Supply + row2Supply + row3Supply); // 80,000
+                } else if (supplyPrice === 800000) {
+                    row1Supply = 350000;
+                    row2Supply = 250000;
+                    row3Supply = 100000;
+                    row4Supply = 800000 - (row1Supply + row2Supply + row3Supply); // 100,000
+                } else if (supplyPrice === 1000000) {
+                    row1Supply = 400000;
+                    row2Supply = 300000;
+                    row3Supply = 150000;
+                    row4Supply = 1000000 - (row1Supply + row2Supply + row3Supply); // 150,000
+                } else if (supplyPrice === 1200000) {
+                    row1Supply = 500000;
+                    row2Supply = 350000;
+                    row3Supply = 170000;
+                    row4Supply = 1200000 - (row1Supply + row2Supply + row3Supply); // 180,000
+                } else {
+                    // Ratio-based round to 10,000 KRW
+                    row1Supply = Math.round((supplyPrice * 0.4) / 10000) * 10000;
+                    row2Supply = Math.round((supplyPrice * 0.3) / 10000) * 10000;
+                    row3Supply = Math.round((supplyPrice * 0.15) / 10000) * 10000;
+                    row4Supply = supplyPrice - (row1Supply + row2Supply + row3Supply); // Exact remainder
+                }
+            }
+
+            // Calculate Item VATs
+            const row1Vat = Math.round(row1Supply * 0.1);
+            const row2Vat = Math.round(row2Supply * 0.1);
+            const row3Vat = Math.round(row3Supply * 0.1);
+            const row4Vat = Math.round(row4Supply * 0.1);
+
+            // Update Summaries
+            document.getElementById('summarySupplyPrice').innerText = formatNumber(supplyPrice) + '원';
+            document.getElementById('summaryVat').innerText = formatNumber(vat) + '원';
+            document.getElementById('summaryTotal').innerText = formatNumber(totalVal) + '원';
+
+            // Korean Text
+            document.getElementById('koreanTextDisplay').innerText = numberToKorean(totalVal);
+
+            // Update Rows
+            document.getElementById('row1Supply').innerText = formatNumber(row1Supply) + '원';
+            document.getElementById('row1Vat').innerText = formatNumber(row1Vat) + '원';
+            document.getElementById('row1Total').innerText = formatNumber(row1Supply + row1Vat) + '원';
+
+            document.getElementById('row2Supply').innerText = formatNumber(row2Supply) + '원';
+            document.getElementById('row2Vat').innerText = formatNumber(row2Vat) + '원';
+            document.getElementById('row2Total').innerText = formatNumber(row2Supply + row2Vat) + '원';
+
+            document.getElementById('row3Supply').innerText = formatNumber(row3Supply) + '원';
+            document.getElementById('row3Vat').innerText = formatNumber(row3Vat) + '원';
+            document.getElementById('row3Total').innerText = formatNumber(row3Supply + row3Vat) + '원';
+
+            document.getElementById('row4Supply').innerText = formatNumber(row4Supply) + '원';
+            document.getElementById('row4Vat').innerText = formatNumber(row4Vat) + '원';
+            document.getElementById('row4Total').innerText = formatNumber(row4Supply + row4Vat) + '원';
+
+            // Footer Total
+            document.getElementById('tableTotalSupply').innerText = formatNumber(supplyPrice) + '원';
+            document.getElementById('tableTotalVat').innerText = formatNumber(vat) + '원';
+            document.getElementById('tableTotalFinal').innerText = formatNumber(totalVal) + '원';
+
+            // Trigger Discount Calculator Update
+            calculateDiscount('amount');
+        }
+
+        // Preset Button Handler
+        function setPreset(amount) {
+            document.getElementById('specialScenarioToggle').checked = false;
+            document.getElementById('totalAmountInput').value = amount;
+            calculateEstimate();
+        }
+
+        // Toggle Special Scenario
+        function toggleSpecialScenario() {
+            calculateEstimate();
+        }
+
+        // Discount Calculator
+        function calculateDiscount(type) {
+            const currentTotalStr = document.getElementById('summaryTotal').innerText.replace(/[^0-9]/g, '');
+            const origTotal = parseFloat(currentTotalStr) || 0;
+
+            if (origTotal <= 0) return;
+
+            let dcAmount = 0;
+            let dcPercent = 0;
+
+            if (type === 'amount') {
+                dcAmount = parseFloat(document.getElementById('discountAmountInput').value) || 0;
+                dcPercent = (dcAmount / origTotal) * 100;
+                document.getElementById('discountPercentInput').value = dcPercent.toFixed(2);
+            } else {
+                dcPercent = parseFloat(document.getElementById('discountPercentInput').value) || 0;
+                dcAmount = (origTotal * (dcPercent / 100));
+                document.getElementById('discountAmountInput').value = Math.round(dcAmount);
+            }
+
+            const finalTotal = origTotal - dcAmount;
+
+            document.getElementById('origTotalText').innerText = formatNumber(origTotal) + '원';
+            document.getElementById('dcAmountText').innerText = formatNumber(dcAmount) + '원';
+            document.getElementById('dcPercentText').innerText = dcPercent.toFixed(2) + '%';
+            document.getElementById('finalDiscountedTotal').innerText = formatNumber(finalTotal) + '원';
+        }
+
+        // Copy to Clipboard (Customer SMS Format)
+        function copyToClipboard() {
+            const totalText = document.getElementById('summaryTotal').innerText;
+            const koreanText = document.getElementById('koreanTextDisplay').innerText;
+            const supplyText = document.getElementById('summarySupplyPrice').innerText;
+            const vatText = document.getElementById('summaryVat').innerText;
+
+            const r1 = document.getElementById('row1Supply').innerText;
+            const r2 = document.getElementById('row2Supply').innerText;
+            const r3 = document.getElementById('row3Supply').innerText;
+            const r4 = document.getElementById('row4Supply').innerText;
+
+            const textToCopy = `[누수탐지 및 배관공사 견적 안내]
+
+■ 견적 금액: ${koreanText}
+   (${totalText} / 부가세 포함)
+
+■ 세부 산출 내역 (공급가액 기준):
+ - 청음식 누수탐지: ${r1}
+ - 가스식 누수탐지(기초압력점검 포함): ${r2}
+ - 굴착작업(파쇄 및 토사정리): ${r3}
+ - 배관수리(재압력검사 및 미장 포함): ${r4}
+---------------------------------
+ - 공급가액 합계: ${supplyText}
+ - 부가가치세 (10%): ${vatText}
+ - 최종 청구금액: ${totalText}
+
+※ 본 견적서는 표준 공사 기준 예상 견적서이며, 굴착 후 특수 배관/매립 깊이 과다 시 상호 협의하에 금액이 조정될 수 있습니다.`;
+
+            // Executive Copy
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = textToCopy;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextArea);
+
+            showToast('고객 전송용 견적문안이 복사되었습니다!');
+        }
+
+        // Show Toast Function
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.remove('hidden');
+            toast.classList.add('animate-toast');
+
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('animate-toast');
+            }, 2500);
+        }
+
+        // Initial Run
+        window.onload = function() {
+            calculateEstimate();
+        };
+    </script>
+</body>
+</html>
